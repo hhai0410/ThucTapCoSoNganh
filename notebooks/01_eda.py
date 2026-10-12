@@ -35,7 +35,7 @@ print(f"Đã di chuyển file vào đúng vị trí: {target_file}")
 
 """**2. Đọc tập dữ liệu và khám phá dữ liệu**"""
 
-df = pd.read_csv("/data/raw/healthcare-dataset-stroke-data.csv")
+df = pd.read_csv("./data/raw/healthcare-dataset-stroke-data.csv")
 
 print(df.head())
 
