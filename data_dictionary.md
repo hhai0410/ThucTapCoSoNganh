@@ -1,12 +1,3 @@
-# Data Dictionary – Stroke Prediction Dataset
-
-> **Mục đích:** Tài liệu mô tả đầy đủ từng cột dữ liệu, dùng làm nguồn cho phần tooltip chú thích trên Frontend và tham chiếu trong báo cáo kỹ thuật.  
-> **Nguồn dữ liệu:** [Stroke Prediction Dataset – Kaggle (fedesoriano)](https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset)  
-> **Phiên bản:** 1.0  
-> **Ngày cập nhật:** 21/10/2026  
-> **Phụ thuộc:** Data Spec v1, kết quả EDA (notebooks/01_eda / 02_visualization)
-
----
 
 ## 1. Tổng quan tập dữ liệu
 
