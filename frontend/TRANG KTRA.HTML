@@ -1,0 +1,697 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sàng lọc nguy cơ đột quỵ</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f7fb;
+            color: #243447;
+            line-height: 1.5;
+        }
+
+        header {
+            background: linear-gradient(to right, #12304a, #1769aa);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin-bottom: 8px;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 25px auto;
+            padding: 15px;
+        }
+
+        .notice {
+            background: #fff7e8;
+            border-left: 5px solid orange;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #00000012;
+        }
+
+        h2 {
+            color: #12304a;
+            margin-bottom: 8px;
+        }
+
+        .description {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid #1769aa55;
+            border-color: #1769aa;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .primary {
+            background: #1769aa;
+            color: white;
+        }
+
+        .secondary {
+            background: #e8eef4;
+            color: #12304a;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .status {
+            display: none;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .error {
+            background: #fff0f0;
+            color: #a11;
+        }
+
+        .info {
+            background: #eef6ff;
+            color: #174a7e;
+        }
+
+        .success {
+            background: #ecfdf3;
+            color: #166534;
+        }
+
+        .empty {
+            padding: 18px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            color: #64748b;
+        }
+
+        .result {
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .percentage {
+            font-size: 40px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .progress {
+            height: 12px;
+            background: #e8edf2;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: #1769aa;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            background: #102030;
+            color: #d8edff;
+            padding: 12px;
+            margin-top: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        details {
+            margin-top: 18px;
+        }
+
+        summary {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .shap-row {
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .shap-track {
+            height: 9px;
+            background: #e8edf2;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .shap-bar {
+            height: 100%;
+            background: #c62828;
+        }
+
+        footer {
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+            padding: 20px;
+        }
+
+        @media (max-width: 750px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .fields {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 22px 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Sàng lọc nguy cơ đột quỵ</h1>
+</header>
+
+<main>
+
+    <div class="notice">
+        <strong>Lưu ý:</strong>
+        Công cụ này chỉ hỗ trợ sàng lọc, không thay thế chẩn đoán
+        của bác sĩ. Nếu xuất hiện dấu hiệu đột quỵ đột ngột, hãy gọi
+        cấp cứu ngay.
+    </div>
+
+    <div class="layout">
+
+        <!-- FORM NHẬP DỮ LIỆU -->
+        <section class="card">
+            <h2>Thông tin bệnh nhân</h2>
+            <p class="description">
+                Nhập đầy đủ 10 trường thông tin sức khỏe.
+            </p>
+
+            <form id="patientForm" novalidate>
+                <div class="fields">
+
+                    <div class="field">
+                        <label for="age">Độ tuổi (age) *</label>
+                        <input id="age" type="number"
+                               min="0" max="120" step="0.1"
+                               placeholder="Ví dụ: 65" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="gender">Giới tính *</label>
+                        <select id="gender" required>
+                            <option value="">-- Chọn --</option>
+                            <option value="Male">Nam</option>
+                            <option value="Female">Nữ</option>
+                            <option value="Other">Khác</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="hypertension">Bệnh cao huyết áp *</label>
+                        <select id="hypertension" required>
+                            <option value="">-- Chọn --</option>
+                            <option value="0">Không</option>
+                            <option value="1">Có</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="heart_disease">Bệnh tim mạch *</label>
+                        <select id="heart_disease" required>
+                            <option value="">-- Chọn --</option>
+                            <option value="0">Không</option>
+                            <option value="1">Có</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="ever_married">Tình trạng hôn nhân *</label>
+                        <select id="ever_married" required>
+                            <option value="">-- Chọn --</option>
+                            <option value="Yes">Đã kết hôn</option>
+                            <option value="No">Chưa kết hôn</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="work_type">Loại công việc *</label>
+                        <select id="work_type" required>
+                            <option value="">-- Chọn --</option>
+                            <option value="Private">Private</option>
+                            <option value="Self-employed">Self-employed</option>
+                            <option value="Govt_job">Govt_job</option>
+                            <option value="children">children</option>
+                            <option value="Never_worked">Never_worked</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="Residence_type">Môi trường sống *</label>
+                        <select id="Residence_type" required>
+                            <option value="">-- Chọn --</option>
+                            <option value="Urban">Thành thị</option>
+                            <option value="Rural">Nông thôn</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="avg_glucose_level">
+                            Lượng đường trong máu (mg/dL) *
+                        </label>
+                        <input id="avg_glucose_level" type="number"
+                               min="1" max="1000" step="0.1"
+                               placeholder="Ví dụ: 200" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="bmi">Chỉ số BMI *</label>
+                        <input id="bmi" type="number"
+                               min="1" max="100" step="0.1"
+                               placeholder="Ví dụ: 28.1" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="smoking_status">Tình trạng hút thuốc *</label>
+                        <select id="smoking_status" required>
+                            <option value="">-- Chọn --</option>
+                            <option value="formerly smoked">Đã từng hút</option>
+                            <option value="never smoked">Chưa từng hút</option>
+                            <option value="smokes">Đang hút</option>
+                            <option value="Unknown">Không rõ</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="actions">
+                    <button class="primary" id="submitBtn" type="submit">
+                        Gửi dữ liệu và phân tích
+                    </button>
+
+                    <button class="secondary" id="demoBtn" type="button">
+                        Nạp dữ liệu mẫu
+                    </button>
+
+                    <button class="secondary" type="reset">
+                        Xóa biểu mẫu
+                    </button>
+                </div>
+
+                <div id="status" class="status" role="status"></div>
+            </form>
+
+            <details>
+                <summary>Xem dữ liệu JSON</summary>
+                <pre id="jsonPreview">Chưa có dữ liệu.</pre>
+            </details>
+        </section>
+
+        <!-- KẾT QUẢ -->
+        <section class="card">
+            <h2>Kết quả sàng lọc</h2>
+            <p class="description">
+                Kết quả được hiển thị khi Backend trả dữ liệu.
+            </p>
+
+            <div id="emptyResult" class="empty">
+                Chưa có kết quả phân tích.
+            </div>
+
+            <div id="result" class="result">
+                <p>Xác suất do mô hình trả về:</p>
+                <div id="percentage" class="percentage">--</div>
+
+                <div class="progress">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+
+                <p id="resultMessage"></p>
+
+                <h3 style="margin-top:20px">Yếu tố giải thích SHAP</h3>
+                <div id="shapList"></div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<footer>
+    Dữ liệu sức khỏe cần được bảo vệ và chỉ gửi đến Backend đáng tin cậy.
+</footer>
+
+<script>
+    // Địa chỉ API của Backend FastAPI
+    const API_URL = "http://127.0.0.1:8000/predict";
+
+    const form = document.getElementById("patientForm");
+    const statusBox = document.getElementById("status");
+    const jsonPreview = document.getElementById("jsonPreview");
+    const submitBtn = document.getElementById("submitBtn");
+
+    // Hiển thị thông báo
+    function showStatus(message, type) {
+        statusBox.textContent = message;
+        statusBox.className = "status show " + type;
+    }
+
+    // Lấy 10 trường dữ liệu
+    function getPayload() {
+        return {
+            age: Number(document.getElementById("age").value),
+            gender: document.getElementById("gender").value,
+            hypertension: Number(document.getElementById("hypertension").value),
+            heart_disease: Number(document.getElementById("heart_disease").value),
+            ever_married: document.getElementById("ever_married").value,
+            work_type: document.getElementById("work_type").value,
+            Residence_type: document.getElementById("Residence_type").value,
+            avg_glucose_level: Number(
+                document.getElementById("avg_glucose_level").value
+            ),
+            bmi: Number(document.getElementById("bmi").value),
+            smoking_status: document.getElementById("smoking_status").value
+        };
+    }
+
+    // Kiểm tra dữ liệu trước khi gửi
+    function validateForm() {
+        const numericRules = [
+            {id: "age", name: "Độ tuổi", min: 0, max: 120},
+            {id: "avg_glucose_level", name: "Đường huyết", min: 1, max: 1000},
+            {id: "bmi", name: "BMI", min: 1, max: 100}
+        ];
+
+        for (const rule of numericRules) {
+            const input = document.getElementById(rule.id);
+            const raw = input.value.trim();
+            const value = Number(raw);
+
+            if (raw === "" || !Number.isFinite(value)) {
+                showStatus(rule.name + " phải là số hợp lệ.", "error");
+                input.focus();
+                return false;
+            }
+
+            if (value < rule.min || value > rule.max) {
+                showStatus(
+                    rule.name + " phải nằm trong khoảng " +
+                    rule.min + " đến " + rule.max + ".",
+                    "error"
+                );
+                input.focus();
+                return false;
+            }
+        }
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            showStatus("Vui lòng nhập đầy đủ thông tin.", "error");
+            return false;
+        }
+
+        return true;
+    }
+
+    // Cập nhật JSON xem trước
+    function updatePreview() {
+        const controls = [...form.querySelectorAll("input, select")];
+
+        if (controls.some(item => item.value === "")) {
+            jsonPreview.textContent = "Nhập đủ thông tin để xem JSON.";
+            return;
+        }
+
+        jsonPreview.textContent =
+            JSON.stringify(getPayload(), null, 2);
+    }
+
+    form.addEventListener("input", updatePreview);
+    form.addEventListener("change", updatePreview);
+
+    // Nạp dữ liệu ví dụ
+    document.getElementById("demoBtn").addEventListener("click", function() {
+        const sample = {
+            age: "65",
+            gender: "Male",
+            hypertension: "1",
+            heart_disease: "0",
+            ever_married: "Yes",
+            work_type: "Private",
+            Residence_type: "Urban",
+            avg_glucose_level: "200",
+            bmi: "28.1",
+            smoking_status: "formerly smoked"
+        };
+
+        for (const key in sample) {
+            document.getElementById(key).value = sample[key];
+        }
+
+        updatePreview();
+
+        showStatus(
+            "Đã nạp dữ liệu mẫu. Đây không phải kết quả chẩn đoán.",
+            "info"
+        );
+    });
+
+    // Hiển thị kết quả Backend trả về
+    function renderResult(data) {
+        let probability =
+            data.risk_probability ?? data.probability ?? data.risk;
+
+        if (typeof probability !== "number" ||
+            !Number.isFinite(probability)) {
+            throw new Error("Backend chưa trả về xác suất hợp lệ.");
+        }
+
+        // Nếu Backend trả về 0.85 thì đổi thành 85%
+        if (probability <= 1) {
+            probability = probability * 100;
+        }
+
+        probability = Math.max(0, Math.min(100, probability));
+
+        document.getElementById("emptyResult").style.display = "none";
+        document.getElementById("result").classList.add("show");
+
+        document.getElementById("percentage").textContent =
+            probability.toFixed(1) + "%";
+
+        const bar = document.getElementById("progressBar");
+        bar.style.width = probability + "%";
+        bar.style.background =
+            probability >= 50 ? "#c62828" : "#1769aa";
+
+        document.getElementById("resultMessage").textContent =
+            "Đây là kết quả của mô hình AI, không phải xác nhận bệnh. " +
+            "Cần được bác sĩ đánh giá.";
+
+        // Hiển thị các yếu tố SHAP
+        const shapList = document.getElementById("shapList");
+        shapList.replaceChildren();
+
+        const shap = data.shap ?? data.explanations ?? [];
+
+        if (!Array.isArray(shap) || shap.length === 0) {
+            shapList.textContent = "Backend chưa cung cấp dữ liệu SHAP.";
+            return;
+        }
+
+        shap.slice(0, 8).forEach(item => {
+            const name = String(item.feature ?? item.name ?? "Yếu tố");
+            const value = Number(item.value ?? item.shap_value ?? 0);
+
+            const row = document.createElement("div");
+            row.className = "shap-row";
+
+            const label = document.createElement("div");
+            label.textContent = name + ": " + value.toFixed(3);
+
+            const track = document.createElement("div");
+            track.className = "shap-track";
+
+            const bar = document.createElement("div");
+            bar.className = "shap-bar";
+            bar.style.width =
+                Math.min(100, Math.abs(value) * 100) + "%";
+
+            if (value < 0) {
+                bar.style.background = "#18794e";
+            }
+
+            track.appendChild(bar);
+            row.append(label, track);
+            shapList.appendChild(row);
+        });
+    }
+
+    // Gửi dữ liệu JSON đến Backend CÓ KÈM TOKEN
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        if (!validateForm()) return;
+
+        // 1. Kiểm tra Token
+        const token = localStorage.getItem("token");
+        if (!token) {
+            showStatus("Bạn cần đăng nhập để thực hiện dự đoán.", "error");
+            setTimeout(() => window.location.href = "DANGKY_DANGNHAP.HTML", 2000);
+            return;
+        }
+
+        const payload = getPayload();
+        jsonPreview.textContent = JSON.stringify(payload, null, 2);
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Đang gửi dữ liệu...";
+        showStatus("Đang kết nối Backend...", "info");
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    // 2. Kẹp token vào Header
+                    "Authorization": "Bearer " + token 
+                },
+                body: JSON.stringify(payload)
+            });
+
+            // 3. Xử lý lỗi Token hết hạn (401)
+            if (response.status === 401) {
+                localStorage.removeItem("token");
+                throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || "Backend trả về HTTP " + response.status);
+            }
+
+            const data = await response.json();
+            renderResult(data);
+            showStatus("Đã nhận kết quả từ Backend.", "success");
+
+        } catch (error) {
+            showStatus(
+                "Lỗi kết nối: " + error.message,
+                "error"
+            );
+            if(error.message.includes("hết hạn")) {
+                 setTimeout(() => window.location.href = "DANGKY_DANGNHAP.HTML", 2000);
+            }
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Gửi dữ liệu và phân tích";
+        }
+    });
+
+    // Xóa kết quả khi xóa biểu mẫu
+    form.addEventListener("reset", function() {
+        setTimeout(function() {
+            statusBox.className = "status";
+            jsonPreview.textContent = "Chưa có dữ liệu.";
+
+            document.getElementById("result").classList.remove("show");
+            document.getElementById("emptyResult").style.display = "block";
+            document.getElementById("percentage").textContent = "--";
+            document.getElementById("progressBar").style.width = "0";
+            document.getElementById("shapList").replaceChildren();
+        }, 0);
+    });
+</script>
+
+</body>
+</html>
