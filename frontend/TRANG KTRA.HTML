@@ -251,6 +251,38 @@
                 padding: 22px 12px;
             }
         }
+        .nav-menu {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: #d8edff;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: #12304a;
+            color: white;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #d8edff;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #c62828;
+            border-color: #c62828;
+    }
     </style>
 </head>
 
@@ -258,6 +290,11 @@
 
 <header>
     <h1>Sàng lọc nguy cơ đột quỵ</h1>
+    <nav class="nav-menu">
+        <a href="TRANG KTRA.HTML" class="nav-link active">Đo mới</a>
+        <a href="LICH_SU.HTML" class="nav-link">Lịch sử của tôi</a>
+        <button id="logoutBtn" class="nav-link logout-btn">Đăng xuất</button>
+    </nav>
 </header>
 
 <main>
@@ -549,7 +586,7 @@
     // Hiển thị kết quả Backend trả về
     function renderResult(data) {
         let probability =
-            data.risk_probability ?? data.probability ?? data.risk;
+            data.risk_probability ?? data.probability ?? data.risk ?? data.confidence;
 
         if (typeof probability !== "number" ||
             !Number.isFinite(probability)) {
@@ -617,64 +654,57 @@
         });
     }
 
-    // Gửi dữ liệu JSON đến Backend CÓ KÈM TOKEN
-    form.addEventListener("submit", async function(event) {
+    // Gửi dữ liệu JSON đến Backend kèm token
+        form.addEventListener("submit", async function(event) {
         event.preventDefault();
 
-        if (!validateForm()) return;
-
-        // 1. Kiểm tra Token
-        const token = localStorage.getItem("token");
-        if (!token) {
-            showStatus("Bạn cần đăng nhập để thực hiện dự đoán.", "error");
-            setTimeout(() => window.location.href = "DANGKY_DANGNHAP.HTML", 2000);
+        if (!validateForm()) {
             return;
         }
 
         const payload = getPayload();
-        jsonPreview.textContent = JSON.stringify(payload, null, 2);
+
+        jsonPreview.textContent =
+            JSON.stringify(payload, null, 2);
 
         submitBtn.disabled = true;
         submitBtn.textContent = "Đang gửi dữ liệu...";
+
         showStatus("Đang kết nối Backend...", "info");
 
         try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                showStatus("Bạn cần đăng nhập để lưu kết quả.", "error");
+                setTimeout(() => window.location.href = "DANGKY_DANGNHAP.HTML", 2000);
+                return;
+            }
+
             const response = await fetch(API_URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    // 2. Kẹp token vào Header
                     "Authorization": "Bearer " + token 
                 },
                 body: JSON.stringify(payload)
             });
 
-            // 3. Xử lý lỗi Token hết hạn (401)
-            if (response.status === 401) {
-                localStorage.removeItem("token");
-                throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-            }
-
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.detail || "Backend trả về HTTP " + response.status);
+                throw new Error(errorData.detail || "Lỗi HTTP " + response.status);
             }
 
             const data = await response.json();
             renderResult(data);
-            showStatus("Đã nhận kết quả từ Backend.", "success");
+            showStatus("Đã nhận kết quả và lưu vào lịch sử.", "success");
 
         } catch (error) {
-            showStatus(
-                "Lỗi kết nối: " + error.message,
-                "error"
-            );
-            if(error.message.includes("hết hạn")) {
-                 setTimeout(() => window.location.href = "DANGKY_DANGNHAP.HTML", 2000);
-            }
+            showStatus("Lỗi kết nối: " + error.message, "error");
         } finally {
+            // Đảm bảo mở khóa nút bấm và trả con trỏ chuột về mặc định
             submitBtn.disabled = false;
             submitBtn.textContent = "Gửi dữ liệu và phân tích";
+            document.body.style.cursor = "default"; // Ép con trỏ chuột hết quay vòng
         }
     });
 
@@ -690,6 +720,12 @@
             document.getElementById("progressBar").style.width = "0";
             document.getElementById("shapList").replaceChildren();
         }, 0);
+    });
+    document.getElementById("logoutBtn").addEventListener("click", function() {
+    if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+        localStorage.removeItem("token");
+        window.location.href = "DANGKY DANGNHAP.HTML";
+    }
     });
 </script>
 

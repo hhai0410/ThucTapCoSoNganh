@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-Pipeline-F7931E?logo=scikitlearn&logoColor=white)
-![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react&logoColor=black)
+![JavaScript](https://shields.io/badge/JavaScript-F7DF1E?logo=JavaScript&logoColor=000&style=flat-square)
 ![Status](https://img.shields.io/badge/status-in%20development-yellow)
 
 </div>
@@ -56,7 +56,7 @@ flowchart LR
 
 | Khối | Công nghệ | Trách nhiệm |
 |---|---|---|
-| **Frontend** | React.js | Form nhập liệu có validation và chú thích đơn vị, hiển thị kết quả + biểu đồ SHAP, lịch sử/biểu đồ xu hướng, Admin Panel, disclaimer |
+| **Frontend** | HTML & JavaScript | Form nhập liệu có validation và chú thích đơn vị, hiển thị kết quả + biểu đồ SHAP, lịch sử/biểu đồ xu hướng, Admin Panel, disclaimer |
 | **Backend** | FastAPI | Nhận JSON, xác thực & phân quyền (JWT), gọi khối AI, lưu/đọc CSDL, API thống kê |
 | **AI** | scikit-learn Pipeline, SHAP | Tiền xử lý + mô hình đóng gói trong **một** file `.pkl`; cung cấp hàm dự đoán kèm giải thích |
 | **Database** | PostgreSQL / MySQL | Tài khoản, hồ sơ, kết quả dự đoán, lịch sử |
@@ -76,19 +76,22 @@ flowchart LR
 
 ```text
 .
-├── data/
-│   ├── raw/                 # Dữ liệu gốc từ Kaggle (chỉ đọc)
-│   └── processed/           # Dữ liệu sau làm sạch cơ bản
-├── notebooks/               # Khám phá & làm sạch dữ liệu (01_eda, 02_eda, 03_eda)
-├── src/
-│   └── preprocessing.py     # build_preprocessor(): ColumnTransformer dùng chung
+├── backend/                 # Mã nguồn phía máy chủ FastAPI
+│   └── app/
+│       ├── database.py      # Cấu hình SQLite / SQLAlchemy
+│       ├── main.py          # Các API Endpoint (Auth, Predict, History)
+│       ├── models.py        # Định nghĩa các bảng Database (User, History)
+│       ├── schemas.py       # Pydantic validation cho request/response
+│       └── security.py      # Mã hóa mật khẩu & tạo JWT Token
+├── frontend/                # Giao diện người dùng (Vanilla HTML & JS)
+│   ├── DANGKY DANGNHAP.HTML # Giao diện Đăng nhập / Đăng ký
+│   ├── TRANG KTRA.HTML      # Giao diện Nhập liệu & Dự đoán AI
+│   └── LICH_SU.HTML         # Giao diện Lịch sử & Biểu đồ Chart.js
 ├── models/
-│   └── model_pipeline.pkl   # Pipeline đã huấn luyện (tiền xử lý + mô hình)
-├── outputs/                 # Biểu đồ, log, kết quả trung gian (figures/, logs/, models/)
-├── info/                    # Tài liệu: Data Spec, đề tài, kế hoạch 10 tuần
-├── app.py, main.py          # Điểm khởi chạy ứng dụng (đang phát triển)
-├── test.py                  # Kiểm thử
-├── requirements.txt         # Thư viện Python (ghim phiên bản)
+│   └── model_pipeline.pkl   # Mô hình AI đóng gói sẵn
+├── notebooks/               # Khám phá và xử lý dữ liệu (EDA)
+├── src/                     # Các hàm tiền xử lý dùng chung
+├── requirements.txt         # Danh sách thư viện Python
 └── README.md
 ```
 
@@ -99,35 +102,58 @@ flowchart LR
 | `src` | Mã nguồn tái sử dụng. `preprocessing.py` định nghĩa `build_preprocessor()`: số (`age`, `avg_glucose_level`, `bmi`) → impute median + `StandardScaler`; phân loại (5 cột) → impute + `OneHotEncoder(handle_unknown="ignore")`; `hypertension`, `heart_disease` → giữ nguyên | Huấn luyện và Backend dùng **cùng một** định nghĩa tiền xử lý |
 | `models` | Artifact mô hình mà ứng dụng nạp lúc chạy. Backend chỉ nạp file này | `.pkl` phụ thuộc phiên bản scikit-learn → cài đúng phiên bản trong `requirements.txt` |
 
+
+Hệ thống cung cấp giao diện Web trực quan bằng HTML/JS thuần giúp người dùng thao tác dễ dàng:
+- **Đăng ký / Đăng nhập:** Xác thực người dùng bằng JSON Web Token (JWT).
+- **Trang Sàng lọc (`TRANG KTRA.HTML`):** Nhập 10 thông số sức khỏe, gửi yêu cầu qua API FastAPI để nhận kết quả xác suất đột quỵ và biểu đồ giải thích yếu tố SHAP.
+- **Trang Lịch sử (`LICH_SU.HTML`):** Truy vấn cơ sở dữ liệu để vẽ biểu đồ biến thiên nguy cơ qua các lần kiểm tra bằng Chart.js.
+
 ---
 
 ## 4. Cài đặt
 
-**Yêu cầu:** Git, Python 3.13 (phiên bản nhóm đang dùng, giúp file `.pkl` tương thích), kết nối Internet để tải dataset.
-
+### Bước 1: Clone dự án và tạo môi trường ảo
 ```bash
-# 1. Clone repo
+
 git clone <repo-url>
-cd <ten-thu-muc-repo>
+cd DuDoanDotQuy
 
-# 2. Tạo & kích hoạt môi trường ảo
+#Ai đã từng chạy dự án có thể nhập lệnh deactivate để thoát khỏi môi trường ảo trước, xong sau đó xóa file môi trường ảo để cài lại và thống nhất requirements mới nhất.
 python -m venv venv
-venv\Scripts\activate          # Windows (CMD)
-# .\venv\Scripts\Activate.ps1  # Windows (PowerShell)
-# source venv/bin/activate     # macOS / Linux
+venv\Scripts\activate          # Trên Windows (CMD / PowerShell)
+# source venv/bin/activate     # Trên macOS / Linux
+```
 
-# 3. Cài thư viện
+### Bước 2: Cài đặt thư viện phụ thuộc
+```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-**Chuẩn bị dữ liệu** (chạy từ **thư mục gốc** của repo vì script dùng đường dẫn tương đối):
+---
 
+## 4. Cách chạy dự án
+
+Để ứng dụng chạy mượt mà, bạn cần khởi động **Backend (FastAPI)** trước, sau đó mở **Frontend (HTML/JS)**.
+
+### Bước 1: Khởi động máy chủ Backend
+Mở Terminal, di chuyển vào thư mục backend và chạy lệnh Uvicorn:
 ```bash
-python notebooks/01_eda.py   # Tải dataset về data/raw/ và xem tổng quan
-python notebooks/03_eda.py   # Xuất data/processed/stroke_clean.csv
-# 02_eda.py: vẽ biểu đồ phân bố (mở cửa sổ biểu đồ, nên chạy trong Jupyter/Colab)
+cd backend
+uvicorn app.main:app --reload
 ```
+*Máy chủ Backend sẽ hoạt động tại địa chỉ: `http://127.0.0.1:8000`*
+
+### Bước 2: Mở giao diện Frontend
+Bạn có thể mở giao diện bằng một trong hai cách sau:
+- **Cách khuyên dùng (Ổn định nhất):** Dùng Python HTTP Server tích hợp:
+  ```bash
+  cd frontend
+  python -m http.server 5500
+  ```
+  Sau đó mở trình duyệt và truy cập: `http://localhost:5500/DANGKY DANGNHAP.HTML`
+- **Cách truyền thống:** Sử dụng tiện ích Live Server, xong open file `DANGKY DANGNHAP.HTML`  with Live Server 
+- **Cách nhanh:** Nhấp đúp trực tiếp vào file `DANGKY DANGNHAP.HTML` trong thư mục `frontend` bằng trình duyệt web (Edge / Chrome).
 
 ---
 

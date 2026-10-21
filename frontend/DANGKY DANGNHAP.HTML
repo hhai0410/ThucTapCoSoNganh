@@ -281,69 +281,76 @@
     }
 
     // Xử lý đăng ký
-    registerForm.addEventListener("submit", function(event) {
-        event.preventDefault();
+    // Xử lý đăng ký (GỌI API BACKEND)
+registerForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
 
-        const name = document.getElementById("fullName").value.trim();
-        const email = document.getElementById("registerEmail")
-            .value.trim().toLowerCase();
-        const password = document.getElementById("registerPassword").value;
-        const confirm = document.getElementById("confirmPassword").value;
+    const name = document.getElementById("fullName").value.trim();
+    const email = document.getElementById("registerEmail").value.trim().toLowerCase();
+    const password = document.getElementById("registerPassword").value;
+    const confirm = document.getElementById("confirmPassword").value;
 
-        if (password !== confirm) {
-            showMessage("Mật khẩu nhập lại không khớp.", "error");
-            return;
-        }
+    if (password !== confirm) {
+        showMessage("Mật khẩu nhập lại không khớp.", "error");
+        return;
+    }
 
-        const users = getUsers();
-
-        if (users.some(user => user.email === email)) {
-            showMessage("Email này đã được đăng ký.", "error");
-            return;
-        }
-
-        users.push({
-            name: name,
-            email: email,
-            password: password
+    try {
+        const response = await fetch("http://127.0.0.1:8000/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            // Kiểm tra Backend nhận trường tên là gì (thường là full_name hoặc name)
+            body: JSON.stringify({ username: name, email: email, password: password }) 
         });
 
-        localStorage.setItem("demoUsers", JSON.stringify(users));
+        const data = await response.json();
+
+        if (!response.ok) {
+            showMessage(data.detail || "Đăng ký thất bại. Email có thể đã tồn tại.", "error");
+            return;
+        }
 
         registerForm.reset();
         document.getElementById("loginEmail").value = email;
-
         setMode("login");
-        showMessage(
-            "Đăng ký minh họa thành công. Bạn có thể đăng nhập.",
-            "success"
-        );
-    });
+        showMessage("Đăng ký thành công! Vui lòng đăng nhập.", "success");
+
+    } catch (error) {
+        showMessage("Lỗi kết nối đến máy chủ Backend.", "error");
+    }
+});
 
     // Xử lý đăng nhập
-    loginForm.addEventListener("submit", function(event) {
-        event.preventDefault();
+    loginForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const password = document.getElementById("loginPassword").value;
 
-        const email = document.getElementById("loginEmail")
-            .value.trim().toLowerCase();
-        const password = document.getElementById("loginPassword").value;
-
-        const user = getUsers().find(function(item) {
-            return item.email === email && item.password === password;
+    try {
+        const response = await fetch("http://127.0.0.1:8000/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            // Tùy theo cấu trúc Backend, có thể gửi JSON hoặc FormData
+            body: JSON.stringify({ email: email, password: password }) 
         });
 
-        if (!user) {
-            showMessage(
-                "Email hoặc mật khẩu không đúng, hoặc chưa đăng ký.",
-                "error"
-            );
+        const data = await response.json();
+
+        if (!response.ok) {
+            showMessage(data.detail || "Đăng nhập thất bại.", "error");
             return;
         }
 
-        showMessage(
-            "Đăng nhập thành công. Xin chào " + user.name + "!",
-            "success"
-        );
+        // Lưu JWT token từ Backend trả về
+        localStorage.setItem("token", data.access_token); 
+        showMessage("Đăng nhập thành công!", "success");
+        
+        // Chuyển hướng sang trang chẩn đoán
+        setTimeout(() => { window.location.href = "TRANG KTRA.HTML"; }, 1500);
+
+        } catch (error) {
+            showMessage("Lỗi kết nối máy chủ.", "error");
+        }
     });
 </script>
 

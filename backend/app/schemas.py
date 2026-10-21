@@ -1,10 +1,12 @@
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
+from typing import List, Optional
 
 # ==========================================
 # 1. KHAI BÁO CÁC ENUM DỮ LIỆU ĐẦU VÀO
 # ==========================================
+
 
 class GenderEnum(str, Enum):
     MALE = "Male"
@@ -38,13 +40,13 @@ class SmokingStatusEnum(str, Enum):
 # ==========================================
 
 class UserRegister(BaseModel):
-    username: str = Field(..., min_length=3, description="Tên đăng nhập")
+    email: str = Field(..., min_length=3, description="Email đăng nhập")
     password: str = Field(..., min_length=6, description="Mật khẩu")
     role: Optional[str] = "user"
     region: Optional[str] = None
 
 class UserLogin(BaseModel):
-    username: str
+    email: str
     password: str
 
 class Token(BaseModel):
@@ -53,7 +55,7 @@ class Token(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
-    username: str
+    email: str
     role: str
     region: Optional[str]
 
@@ -124,7 +126,13 @@ class PredictRequest(BaseModel):
         json_schema_extra={"example": "never smoked"}
     )
 
+class ShapItem(BaseModel):
+    feature: str
+    value: float
+
+
 class PredictResponse(BaseModel):
     prediction_result: int = Field(..., description="Kết quả dự đoán đột quỵ: 0 (Không bị), 1 (Có nguy cơ)")
-    confidence: float = Field(..., description="Độ tin cậy của mô hình (ví dụ: 0.95)")
+    risk_probability: float = Field(..., description="Độ tin cậy của mô hình (ví dụ: 0.95)")
     message: str = Field(default="Dự đoán thành công", description="Thông báo phản hồi")
+    shap: Optional[List[ShapItem]] = []

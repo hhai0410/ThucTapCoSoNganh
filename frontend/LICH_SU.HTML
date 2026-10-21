@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch sử theo dõi nguy cơ</title>
+    <!-- Nhúng Chart.js để vẽ biểu đồ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f7fb;
+            color: #243447;
+            margin: 0; padding: 0;
+        }
+        header {
+            background: linear-gradient(to right, #12304a, #1769aa);
+            color: white; padding: 20px; text-align: center;
+        }
+        .container {
+            max-width: 900px; margin: 30px auto; padding: 20px;
+            background: white; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .chart-container {
+            position: relative; height: 40vh; width: 100%; margin-top: 20px;
+        }
+        .back-btn {
+            display: inline-block; margin-bottom: 20px;
+            color: #1769aa; text-decoration: none; font-weight: bold;
+        }
+        table {
+            width: 100%; border-collapse: collapse; margin-top: 30px;
+        }
+        th, td {
+            padding: 12px; border-bottom: 1px solid #ddd; text-align: left;
+        }
+        th { background-color: #f8f9fa; }
+        .risk-high { color: #c62828; font-weight: bold; }
+        .risk-low { color: #166534; font-weight: bold; }
+        .nav-menu {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .nav-link {
+            color: #d8edff;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: #12304a;
+            color: white;
+        }
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #d8edff;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background: #c62828;
+            border-color: #c62828;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <header>
+    <h1>Hồ sơ theo dõi cá nhân</h1>
+    <nav class="nav-menu">
+        <a href="TRANG KTRA.HTML" class="nav-link">Đo mới</a>
+        <a href="LICH_SU.HTML" class="nav-link active">Lịch sử của tôi</a>
+        <button id="logoutBtn" class="nav-link logout-btn">Đăng xuất</button>
+    </nav>
+</header>
+</header>
+
+<div class="container">
+    <a href="TRANG KTRA.HTML" class="back-btn">← Quay lại đo mới</a>
+    
+    <h2>Biểu đồ biến thiên nguy cơ đột quỵ</h2>
+    <p>Theo dõi % rủi ro qua các lần chẩn đoán để điều chỉnh lối sống.</p>
+    
+    <div class="chart-container">
+        <canvas id="historyChart"></canvas>
+    </div>
+
+    <h2>Lịch sử chi tiết</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Ngày khám</th>
+                <th>Đường huyết</th>
+                <th>BMI</th>
+                <th>Huyết áp</th>
+                <th>Nguy cơ dự đoán</th>
+            </tr>
+        </thead>
+        <tbody id="historyTableBody">
+            <!-- Dữ liệu sẽ được render bằng JS -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    async function loadHistory() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("Bạn cần đăng nhập để xem lịch sử!");
+            window.location.href = "DANGKY_DANGNHAP.HTML";
+            return;
+        }
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/history", {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (response.ok) {
+                const realHistoryData = await response.json();
+                renderChartsAndTable(realHistoryData); 
+            } else {
+                console.error("Lỗi lấy lịch sử từ Backend");
+            }
+        } catch (error) {
+            console.error("Lỗi máy chủ", error);
+        }
+    }
+
+    function renderChartsAndTable(historyData) {
+        const tbody = document.getElementById("historyTableBody");
+        tbody.innerHTML = ""; 
+        
+        // Render Table
+        historyData.forEach(record => {
+            const tr = document.createElement("tr");
+            const riskClass = record.risk > 50 ? "risk-high" : "risk-low";
+            tr.innerHTML = `
+                <td>${record.date}</td>
+                <td>${record.glucose} mg/dL</td>
+                <td>${record.bmi}</td>
+                <td>${record.bp}</td>
+                <td class="${riskClass}">${record.risk.toFixed(1)}%</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Render Chart
+        const ctx = document.getElementById('historyChart').getContext('2d');
+        if (window.myLineChart) window.myLineChart.destroy(); 
+        
+        window.myLineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: historyData.map(d => d.date),
+                datasets: [{
+                    label: 'Nguy cơ đột quỵ (%)',
+                    data: historyData.map(d => d.risk),
+                    borderColor: '#1769aa',
+                    backgroundColor: 'rgba(23, 105, 170, 0.2)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#c62828',
+                    pointRadius: 5,
+                    fill: true,
+                    tension: 0.3 
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+    }
+
+    loadHistory();
+    document.getElementById("logoutBtn").addEventListener("click", function() {
+        if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+            localStorage.removeItem("token");
+            window.location.href = "DANGKY DANGNHAP.HTML";
+        }
+    });
+</script>
+</body>
+</html>
