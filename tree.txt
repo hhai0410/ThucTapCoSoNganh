@@ -1,0 +1,48 @@
+```
+DuDoanDotQuy
+├─ app.py
+├─ backend
+│  ├─ alembic
+│  │  ├─ env.py
+│  │  ├─ README
+│  │  ├─ script.py.mako
+│  │  └─ versions
+│  ├─ alembic.ini
+│  ├─ app
+│  │  ├─ database.py
+│  │  ├─ main.py
+│  │  ├─ models.py
+│  │  ├─ schemas.py
+│  │  ├─ security.py
+│  │  └─ __init__.py
+│  └─ app.db
+├─ data.py
+├─ data_dictionary.md
+├─ frontend
+│  ├─ DANGKY DANGNHAP.HTML
+│  ├─ LICH_SU.HTML
+│  └─ TRANG KTRA.HTML
+├─ info
+│  ├─ DataSpecV3.docx
+│  ├─ De_tai_He_thong_Chan_doan_Dot_quy.docx
+│  └─ Ke_hoach_10_tuan_Chan_doan_Dot_quy V3.docx
+├─ models
+│  └─ model_pipeline.pkl
+├─ notebooks
+│  ├─ 01_eda.py
+│  ├─ 02_eda.py
+│  └─ 03_eda.py
+├─ outputs
+│  ├─ figures
+│  └─ logs
+├─ README.md
+├─ Report
+│  └─ BC_TTCSN_TUAN6_NHOM_5.docx
+├─ requirements.txt
+└─ src
+   ├─ 02_feature_engineering.ipynb
+   ├─ preprocessing.py
+   ├─ week3.py
+   └─ week4.py
+
+```

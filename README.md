@@ -113,47 +113,75 @@ Hệ thống cung cấp giao diện Web trực quan bằng HTML/JS thuần giúp
 ## 4. Cài đặt
 
 ### Bước 1: Clone dự án và tạo môi trường ảo
-```bash
 
+```bash
 git clone <repo-url>
 cd DuDoanDotQuy
 
-#Ai đã từng chạy dự án có thể nhập lệnh deactivate để thoát khỏi môi trường ảo trước, xong sau đó xóa file môi trường ảo để cài lại và thống nhất requirements mới nhất.
 python -m venv venv
 venv\Scripts\activate          # Trên Windows (CMD / PowerShell)
 # source venv/bin/activate     # Trên macOS / Linux
 ```
 
 ### Bước 2: Cài đặt thư viện phụ thuộc
+
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+### Bước 3: Chọn Interpreter (Môi trường ảo) trong VS Code / IDE
+
+1. Mở thư mục dự án trong VS Code.
+2. Nhấn tổ hợp phím `Ctrl + Shift + P` (hoặc `Cmd + Shift + P` trên Mac).
+3. Gõ và chọn lệnh: **`Python: Select Interpreter`**.
+4. Chọn đường dẫn trỏ tới môi trường ảo vừa tạo của dự án (`./venv/Scripts/python.exe`).
+
 ---
 
-## 4. Cách chạy dự án
+## 4. Quy trình chạy dự án & Huấn luyện mô hình
 
-Để ứng dụng chạy mượt mà, bạn cần khởi động **Backend (FastAPI)** trước, sau đó mở **Frontend (HTML/JS)**.
+Để tái tạo lại toàn bộ dữ liệu, huấn luyện mô hình AI và vận hành hệ thống, bạn thực hiện lần lượt các bước sau:
 
-### Bước 1: Khởi động máy chủ Backend
-Mở Terminal, di chuyển vào thư mục backend và chạy lệnh Uvicorn:
+### Bước 1: Chạy các script trong thư mục notebooks (Tạo data/raw và data/processed)
+Từ thư mục gốc của dự án, chạy các tệp Python theo thứ tự để tải và chuẩn hóa dữ liệu:
+```bash
+python notebooks/01_eda.py   # Tải dataset gốc lưu vào thư mục data/raw/
+python notebooks/02_eda.py   # Khám phá và phân tích đặc trưng dữ liệu
+python notebooks/03_eda.py   # Xử lý sạch và xuất dữ liệu ra thư mục data/processed/
+```
+
+### Bước 2: Xử lý cân bằng dữ liệu với week3.py
+Chạy script `week3.py` để thực hiện chia tập dữ liệu huấn luyện/kiểm thử và áp dụng kỹ thuật cân bằng lớp SMOTE:
+```bash
+python src/week3.py
+```
+
+### Bước 3: Huấn luyện mô hình với week4.py
+Chạy script `week4.py` trong thư mục `src` để huấn luyện pipeline mô hình Machine Learning và tự động lưu artifact vào `models/model_pipeline.pkl`:
+```bash
+python src/week4.py
+```
+
+### Bước 4: Khởi động máy chủ Backend (FastAPI)
+Sau khi đã có file mô hình `.pkl`, mở Terminal, di chuyển vào thư mục `backend` và khởi động máy chủ bằng Uvicorn:
 ```bash
 cd backend
 uvicorn app.main:app --reload
 ```
-*Máy chủ Backend sẽ hoạt động tại địa chỉ: `http://127.0.0.1:8000`*
+*Máy chủ Backend sẽ hoạt động tại: `http://127.0.0.1:8000`*
 
-### Bước 2: Mở giao diện Frontend
-Bạn có thể mở giao diện bằng một trong hai cách sau:
-- **Cách khuyên dùng (Ổn định nhất):** Dùng Python HTTP Server tích hợp:
+### Bước 5: Mở giao diện Frontend
+Bạn có thể mở giao diện bằng một trong hai cách:
+* **Cách khuyên dùng (Ổn định qua HTTP):** Dùng Python HTTP Server:
   ```bash
   cd frontend
   python -m http.server 5500
   ```
   Sau đó mở trình duyệt và truy cập: `http://localhost:5500/DANGKY DANGNHAP.HTML`
-- **Cách truyền thống:** Sử dụng tiện ích Live Server, xong open file `DANGKY DANGNHAP.HTML`  with Live Server 
-- **Cách nhanh:** Nhấp đúp trực tiếp vào file `DANGKY DANGNHAP.HTML` trong thư mục `frontend` bằng trình duyệt web (Edge / Chrome).
+* **Cách truyền thống:** Sử dụng tiện ích Live Server, xong open file `DANGKY DANGNHAP.HTML`  with Live Server 
+* **Cách nhanh:** Nhấp đúp trực tiếp vào file `DANGKY DANGNHAP.HTML` trong thư mục `frontend` bằng trình duyệt web.
+
 
 ---
 
