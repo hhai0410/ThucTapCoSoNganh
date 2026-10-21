@@ -1,17 +1,4 @@
-"""
-Tuần 4 – Huấn luyện mô hình Baseline
-======================================
-Huấn luyện 2 mô hình baseline trên tập train đã cân bằng (SMOTE từ Tuần 3):
-    - Logistic Regression
-    - Decision Tree
 
-Output (outputs/models/):
-    logistic_regression_baseline.pkl
-    decision_tree_baseline.pkl
-
-Người thực hiện: Hoàng Nhật Giang (ML Engineer)
-Phụ thuộc: Artifacts từ Tuần 3 (train_resampled.npz, feature_names.pkl)
-"""
 
 import os
 import sys
