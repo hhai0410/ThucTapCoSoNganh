@@ -300,7 +300,7 @@ registerForm.addEventListener("submit", async function(event) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             // Kiểm tra Backend nhận trường tên là gì (thường là full_name hoặc name)
-            body: JSON.stringify({ username: name, email: email, password: password }) 
+            body: JSON.stringify({ full_name: name, email: email, password: password }) 
         });
 
         const data = await response.json();
