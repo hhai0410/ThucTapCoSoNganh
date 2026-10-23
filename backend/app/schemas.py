@@ -7,7 +7,6 @@ from typing import List, Optional
 # 1. KHAI BÁO CÁC ENUM DỮ LIỆU ĐẦU VÀO
 # ==========================================
 
-
 class GenderEnum(str, Enum):
     MALE = "Male"
     FEMALE = "Female"
@@ -40,6 +39,7 @@ class SmokingStatusEnum(str, Enum):
 # ==========================================
 
 class UserRegister(BaseModel):
+    full_name: str = Field(..., description="Họ và tên") # Thêm dòng này
     email: str = Field(..., min_length=3, description="Email đăng nhập")
     password: str = Field(..., min_length=6, description="Mật khẩu")
     role: Optional[str] = "user"
