@@ -10,7 +10,7 @@ Script tự làm lần lượt (bước nào đã xong từ lần trước thì 
     1. Tạo môi trường ảo ./venv
     2. Cài thư viện từ requirements.txt (chỉ cài lại khi file này thay đổi)
     3. Chuẩn bị dữ liệu : notebooks/01_eda.py -> notebooks/03_eda.py
-    4. Huấn luyện model : src/week3.py -> src/week4.py -> models/model_pipeline.pkl
+    4. Huấn luyện model : src/week3.py -> src/week5.py -> outputs/models/best_model_week5.pkl
     5. Bật Backend (FastAPI, cổng 8000) và Frontend (cổng 5500), mở trình duyệt
 
 Chỉ dùng thư viện chuẩn của Python nên chạy được ngay cả khi chưa cài gì.
@@ -45,13 +45,15 @@ REQUIREMENTS = ROOT / "requirements.txt"
 # Các file "đầu ra": nếu đã tồn tại thì bước tạo ra nó được bỏ qua
 RAW_CSV = ROOT / "data" / "raw" / "healthcare-dataset-stroke-data.csv"
 CLEAN_CSV = ROOT / "data" / "processed" / "stroke_clean.csv"
-MODEL_PKL = ROOT / "models" / "model_pipeline.pkl"
+MODEL_PKL = ROOT / "outputs" / "models" / "best_model_week5.pkl"   # model cuối do week5 lưu
 
 SCRIPT_DOWNLOAD = ROOT / "notebooks" / "01_eda.py"   # tải dữ liệu gốc
 SCRIPT_EDA = ROOT / "notebooks" / "02_eda.py"        # vẽ biểu đồ (chỉ chạy khi có --eda)
 SCRIPT_CLEAN = ROOT / "notebooks" / "03_eda.py"      # làm sạch dữ liệu
-SCRIPT_WEEK3 = ROOT / "src" / "week3.py"             # chia train/test + SMOTE
-SCRIPT_WEEK4 = ROOT / "src" / "week4.py"             # huấn luyện, lưu model
+SCRIPT_WEEK3 = ROOT / "src" / "week3.py"             # chia train/test + SMOTE (tạo data/processed/*.npz)
+# Script huấn luyện + so sánh mô hình, lưu model vào outputs/models/.
+# Ưu tiên src/week5.py; nếu repo đặt tên src/week5_full.py thì dùng tên đó.
+SCRIPT_TRAIN_CANDIDATES = [ROOT / "src" / "week5.py", ROOT / "src" / "week5_full.py"]
 
 BACKEND_DIR = ROOT / "backend"
 FRONTEND_DIR = ROOT / "frontend"
@@ -72,6 +74,10 @@ REQUIRED_SERVE = [
 REQUIRED_TRAIN = [
     ("imblearn", "imbalanced-learn"),
     ("kagglehub", "kagglehub"),
+    ("xgboost", "xgboost"),
+    ("lightgbm", "lightgbm"),
+    ("matplotlib", "matplotlib"),
+    ("seaborn", "seaborn"),
 ]
 
 
@@ -122,6 +128,14 @@ def requirements_hash():
     return hashlib.sha256(REQUIREMENTS.read_bytes()).hexdigest()
 
 
+def train_script():
+    """Chọn script huấn luyện: week5.py, hoặc week5_full.py nếu repo dùng tên đó."""
+    for candidate in SCRIPT_TRAIN_CANDIDATES:
+        if candidate.exists():
+            return candidate
+    return SCRIPT_TRAIN_CANDIDATES[0]       # không có file nào -> run_script sẽ báo lỗi rõ ràng
+
+
 def backend_command(py, reload):
     cmd = [str(py), "-m", "uvicorn", BACKEND_APP, "--port", str(BACKEND_PORT)]
     if reload:
@@ -160,7 +174,7 @@ def print_plan(plan, args):
     say("  " + yn(plan["need_raw"], "01_eda.py - tải dữ liệu gốc", "đã có data/raw/..."))
     say("  " + yn(plan["run_eda"], "02_eda.py - vẽ biểu đồ khám phá", "chỉ chạy khi thêm --eda"))
     say("  " + yn(plan["need_clean"], "03_eda.py - làm sạch dữ liệu", "đã có data/processed/stroke_clean.csv"))
-    say("  " + yn(plan["need_model"], "week3.py + week4.py - huấn luyện model", "đã có models/model_pipeline.pkl"))
+    say("  " + yn(plan["need_model"], f"week3.py + {train_script().name} - huấn luyện model", "đã có outputs/models/best_model_week5.pkl"))
     if args.setup_only:
         say("  BỎ QUA   : bật máy chủ (do --setup-only)")
     else:
@@ -260,12 +274,12 @@ def train_model(py, plan, total):
     step(4, total, "Huấn luyện mô hình")
     if plan["need_model"]:
         run_script(py, SCRIPT_WEEK3, "chia train/test + SMOTE")
-        run_script(py, SCRIPT_WEEK4, "huấn luyện mô hình")
+        run_script(py, train_script(), "huấn luyện và so sánh mô hình")
     else:
-        say("Đã có models/model_pipeline.pkl - bỏ qua huấn luyện (thêm --retrain để huấn luyện lại).")
+        say("Đã có outputs/models/best_model_week5.pkl - bỏ qua huấn luyện (thêm --retrain để huấn luyện lại).")
     if not MODEL_PKL.exists():
-        fail("Chạy xong các bước huấn luyện nhưng không thấy models/model_pipeline.pkl.\n"
-             "  Kiểm tra src/week4.py có lưu model đúng đường dẫn này không.")
+        fail("Chạy xong các bước huấn luyện nhưng không thấy outputs/models/best_model_week5.pkl.\n"
+             f"  Kiểm tra {train_script().name} có lưu model đúng đường dẫn này không.")
 
 
 def stop_all(procs):
@@ -356,7 +370,7 @@ def start_servers(py, args, total):
 def parse_args(argv=None):
     p = argparse.ArgumentParser(
         description="Chạy toàn bộ dự án (cài đặt + dữ liệu + huấn luyện + máy chủ) bằng một lệnh.")
-    p.add_argument("--retrain", action="store_true", help="huấn luyện lại model (chạy lại week3 + week4)")
+    p.add_argument("--retrain", action="store_true", help="huấn luyện lại model (chạy lại week3 + week5)")
     p.add_argument("--refresh-data", action="store_true",
                    help="tải lại dữ liệu gốc, làm sạch lại và huấn luyện lại")
     p.add_argument("--eda", action="store_true", help="chạy thêm 02_eda.py (mở cửa sổ biểu đồ)")
