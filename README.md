@@ -30,7 +30,7 @@
 
 ```bash
 git clone <repo-url>
-cd DuDoanDotQuy
+cd ThucTapCoSoNganh
 python run.py
 ```
 
