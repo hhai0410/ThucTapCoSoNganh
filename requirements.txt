@@ -38,6 +38,7 @@ jupyter_core==5.9.1
 kagglehub==1.0.2
 kagglesdk==0.1.37
 kiwisolver==1.5.1
+lightgbm==4.7.0
 MarkupSafe==3.0.3
 matplotlib==3.11.2
 matplotlib-inline==0.2.2
@@ -75,8 +76,10 @@ rsa==4.9.1
 scikit-learn==1.9.1
 scipy==1.18.1
 seaborn==0.13.2
+shap==0.54.1
 six==1.17.0
 sklearn-compat==0.1.6
+slicer==0.0.8
 SQLAlchemy==2.1.5
 stack-data==0.6.3
 starlette==1.6.0
@@ -94,3 +97,4 @@ uvicorn==0.53.0
 watchdog==6.0.0
 wcwidth==0.9.2
 websockets==16.1.1
+xgboost==3.4.1
