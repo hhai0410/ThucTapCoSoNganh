@@ -30,7 +30,7 @@
 
 ```bash
 git clone <repo-url>
-cd ThucTapCoSoNganh
+cd DuDoanDotQuy
 python run.py
 ```
 
@@ -46,7 +46,7 @@ Sau khi chạy xong, trình duyệt tự mở trang đăng nhập. Nhấn `Ctrl 
 | 1 | Tạo môi trường ảo `venv/` | Đã có `venv/` |
 | 2 | Cài thư viện từ `requirements.txt` | `requirements.txt` không đổi từ lần cài trước |
 | 3 | Tải dữ liệu gốc (`notebooks/01_eda.py`) rồi làm sạch (`notebooks/03_eda.py`) | Đã có `data/raw/...csv` và `data/processed/stroke_clean.csv` |
-| 4 | Chia train/test + SMOTE (`src/week3.py`), huấn luyện và lưu `models/model_pipeline.pkl` (`src/week4.py`) | Đã có `models/model_pipeline.pkl` |
+| 4 | Chia train/test + SMOTE (`src/week3.py`), huấn luyện và so sánh mô hình, lưu `outputs/models/best_model_week5.pkl` (`src/week5.py`) | Đã có `outputs/models/best_model_week5.pkl` |
 | 5 | Bật Backend (cổng `8000`) và Frontend (cổng `5500`), mở trình duyệt | Không bao giờ bỏ qua (trừ khi dùng `--setup-only`) |
 
 > Lần chạy đầu tiên mất vài phút (cài thư viện, tải dữ liệu, huấn luyện mô hình).
@@ -57,7 +57,7 @@ Sau khi chạy xong, trình duyệt tự mở trang đăng nhập. Nhấn `Ctrl 
 | Lệnh | Tác dụng |
 |---|---|
 | `python run.py --dry-run` | Chỉ in ra kế hoạch sẽ làm gì, chưa làm gì cả |
-| `python run.py --retrain` | Huấn luyện lại mô hình (chạy lại `week3.py` và `week4.py`) |
+| `python run.py --retrain` | Huấn luyện lại mô hình (chạy lại `week3.py` và `week5.py`) |
 | `python run.py --refresh-data` | Tải lại dữ liệu gốc, làm sạch lại và huấn luyện lại |
 | `python run.py --eda` | Chạy thêm `02_eda.py` để xem biểu đồ khám phá dữ liệu |
 | `python run.py --setup-only` | Chỉ chuẩn bị (cài đặt, dữ liệu, huấn luyện), không bật máy chủ |
@@ -68,7 +68,7 @@ Sau khi chạy xong, trình duyệt tự mở trang đăng nhập. Nhấn `Ctrl 
 
 | Thành phần | Địa chỉ |
 |---|---|
-| Ứng dụng web | http://localhost:5500/DANGKY%20DANGNHAP.HTML |
+| Ứng dụng web | http://localhost:5500 (`run.py` tự mở đúng trang đăng nhập) |
 | Tài liệu API (Swagger) | http://127.0.0.1:8000/docs |
 
 ---
@@ -101,7 +101,7 @@ Từ **10 chỉ số** người dùng nhập, hệ thống ước lượng **đi
 ```mermaid
 flowchart LR
     FE["Khối 1: Frontend<br/>HTML + JavaScript"] -- "JSON 10 trường" --> BE["Khối 2: Backend<br/>FastAPI"]
-    BE -- "DataFrame 1 dòng" --> AI["Khối 3: AI<br/>model_pipeline.pkl + SHAP"]
+    BE -- "DataFrame 1 dòng" --> AI["Khối 3: AI<br/>best_model_week5.pkl + SHAP"]
     AI -- "điểm nguy cơ + SHAP" --> BE
     BE <--> DB[("Khối 4: Database<br/>SQLite")]
     BE -- "kết quả + giải thích" --> FE
@@ -146,11 +146,11 @@ flowchart LR
 ├── src/
 │   ├── preprocessing.py     # build_preprocessor(): ColumnTransformer dùng chung
 │   ├── week3.py             # Chia train/test + cân bằng lớp SMOTE
-│   └── week4.py             # Huấn luyện pipeline, lưu models/model_pipeline.pkl
+│   └── week5.py             # Huấn luyện + so sánh mô hình, lưu outputs/models/best_model_week5.pkl
 ├── notebooks/               # Khám phá và xử lý dữ liệu (01_eda, 02_eda, 03_eda)
 ├── data/                    # (tự tạo khi chạy) raw/ và processed/
-├── models/                  # model_pipeline.pkl - mô hình AI đóng gói sẵn
-├── outputs/                 # Biểu đồ, log, kết quả trung gian
+├── outputs/
+│   └── models/              # best_model_week5.pkl (mô hình AI đóng gói sẵn) + biểu đồ so sánh mô hình
 ├── info/                    # Tài liệu: Data Spec, đề tài, kế hoạch 10 tuần
 └── README.md
 ```
@@ -160,7 +160,7 @@ flowchart LR
 | `data/raw` | Bản gốc của dataset (`healthcare-dataset-stroke-data.csv`), tải bằng `01_eda.py` | **Không sửa tay.** Mọi thay đổi phải qua script để tái lập được |
 | `data/processed` | `stroke_clean.csv`: dữ liệu đã bỏ cột `id`, giữ 10 cột đặc trưng + nhãn `stroke` | **Chưa** encode/scale/impute (`bmi` vẫn còn giá trị thiếu). Việc này thuộc Pipeline để chỉ fit trên tập train, tránh rò rỉ dữ liệu (*data leakage*) |
 | `src` | Mã nguồn tái sử dụng. `preprocessing.py` định nghĩa `build_preprocessor()`: số (`age`, `avg_glucose_level`, `bmi`) → impute median + `StandardScaler`; phân loại (5 cột) → impute + `OneHotEncoder(handle_unknown="ignore")`; `hypertension`, `heart_disease` → giữ nguyên | Huấn luyện và Backend dùng **cùng một** định nghĩa tiền xử lý |
-| `models` | Artifact mô hình mà ứng dụng nạp lúc chạy. Backend chỉ nạp file này | `.pkl` phụ thuộc phiên bản scikit-learn → cài đúng phiên bản trong `requirements.txt`. Nếu `.pkl` không được commit lên Git, lần chạy đầu `run.py` sẽ tự huấn luyện ra |
+| `outputs/models` | Artifact mô hình mà ứng dụng nạp lúc chạy (`best_model_week5.pkl`) cùng các biểu đồ so sánh mô hình (`.png`). Backend chỉ nạp file mô hình này | `.pkl` phụ thuộc phiên bản scikit-learn → cài đúng phiên bản trong `requirements.txt`. Nếu `.pkl` không được commit lên Git, lần chạy đầu `run.py` sẽ tự huấn luyện ra |
 
 > Các thư mục/tệp sinh ra khi chạy (`venv/`, `data/`, `__pycache__/`, file CSDL `*.db`) không nên commit lên Git, hãy khai báo trong `.gitignore`.
 
@@ -215,10 +215,10 @@ python notebooks/03_eda.py   # Làm sạch, xuất ra data/processed/
 python src/week3.py
 ```
 
-### Bước 4: Huấn luyện mô hình
+### Bước 4: Huấn luyện và so sánh mô hình
 
 ```bash
-python src/week4.py          # Lưu mô hình vào models/model_pipeline.pkl
+python src/week5.py          # Lưu mô hình vào outputs/models/best_model_week5.pkl
 ```
 
 ### Bước 5: Khởi động Backend (FastAPI)
@@ -239,7 +239,7 @@ cd frontend
 python -m http.server 5500
 ```
 
-Truy cập `http://localhost:5500/DANGKY%20DANGNHAP.HTML`.
+Truy cập `http://localhost:5500` rồi chọn trang đăng nhập (`DANGKY_DANGNHAP.HTML`).
 
 Cách khác: dùng tiện ích **Live Server** của VS Code, chuột phải vào `DANGKY DANGNHAP.HTML` → *Open with Live Server*.
 
@@ -257,9 +257,9 @@ Cách khác: dùng tiện ích **Live Server** của VS Code, chuột phải và
 | Báo cổng `8000` hoặc `5500` đang bị chiếm | Dự án đang chạy ở terminal khác: tắt bằng `Ctrl + C`. Hoặc tìm tiến trình: `netstat -ano \| findstr :8000` rồi `taskkill /PID <số PID> /F` (Windows) |
 | Lỗi tải dữ liệu từ Kaggle | Tải thủ công `healthcare-dataset-stroke-data.csv` từ trang dataset, đặt vào `data/raw/` rồi chạy lại `python run.py` |
 | `run.py` báo thiếu thư viện | Thêm thư viện được nêu vào `requirements.txt` (mỗi dòng một thư viện) rồi chạy lại |
-| Cảnh báo/lỗi phiên bản scikit-learn khi nạp `model_pipeline.pkl` | Huấn luyện lại bằng đúng thư viện đang cài: `python run.py --retrain` |
+| Cảnh báo/lỗi phiên bản scikit-learn khi nạp `best_model_week5.pkl` | Huấn luyện lại bằng đúng thư viện đang cài: `python run.py --retrain` |
 | Trang web không gọi được API | Kiểm tra Backend đang chạy ở cổng `8000` và bạn mở web qua `http://localhost:5500/...` (không phải `file://`) |
-| Muốn làm lại từ đầu | Xóa `venv/`, `data/`, `models/model_pipeline.pkl` rồi chạy lại `python run.py` |
+| Muốn làm lại từ đầu | Xóa `venv/`, `data/`, `outputs/models/best_model_week5.pkl` rồi chạy lại `python run.py` |
 
 ---
 
