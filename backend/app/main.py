@@ -73,7 +73,7 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 # 3. Load Model
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-MODEL_PATH = os.path.join(BASE_DIR, "outputs/models", "decision_tree_pipeline.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "outputs/models", "best_model_week5.pkl")
 
 try:
     model = joblib.load(MODEL_PATH)
