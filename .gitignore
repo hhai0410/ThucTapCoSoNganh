@@ -3,3 +3,10 @@ __pycache__/
 data/
 outputs/models/
 .DS_Store
+backend/.jwt_secret
+*.db
+outputs/*.txt
+outputs/validated/*.pkl
+
+backend/.data_key
+outputs/final/*.pkl

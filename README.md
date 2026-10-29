@@ -1,3 +1,59 @@
+## Phiên bản demo hoàn chỉnh ngày 30/10/2026
+
+Giữ nguyên FastAPI, SQLAlchemy/SQLite, JWT/bcrypt, HTML/CSS/JavaScript, Pandas, scikit-learn, imbalanced-learn, XGBoost, LightGBM, SHAP và matplotlib; không thêm framework hoặc dịch vụ ngoài.
+
+### Khởi chạy và demo
+
+1. Dừng phiên chạy cũ bằng Ctrl+C, rồi chạy `python run.py` (hoặc `run.bat`). Nếu trình duyệt giữ giao diện cũ, dùng Ctrl+F5.
+2. Trang đăng nhập có nút Người dùng / Bác sĩ / Admin trong phần **Trải nghiệm nhanh**. Không cần tạo admin thủ công để demo. Đây là tài khoản mẫu dùng chung, dữ liệu sức khỏe ban đầu là giả lập có ghi thời gian khác nhau để trình diễn lịch sử.
+3. Form Tạo tài khoản có vai trò Người dùng hoặc Bác sĩ khi chế độ demo được bật.
+4. Ngoài giao diện cổng 5500, có thể mở `http://127.0.0.1:8000/web/` trực tiếp trên Backend. Cách này không cần máy chủ frontend riêng.
+5. Chế độ local mặc định là demo. Đặt `DEMO_MODE=0` trước khi chạy để tắt đăng nhập demo và tự đăng ký bác sĩ; admin thật cấp quyền bác sĩ từ giao diện. Không công khai bản demo dùng chung.
+
+### Chức năng
+
+- Người dùng: 10 chỉ số có validation, kết quả màu xanh/vàng/đỏ, điểm mô hình, SHAP tăng/giảm, lời nhắc tham khảo, lịch sử và biểu đồ offline.
+- Bác sĩ: tìm bệnh nhân theo tên/email, tạo hồ sơ không cần mật khẩu, dự đoán cho hồ sơ cụ thể, chọn ngưỡng riêng từng lần đo, nhập CSV UTF-8/XLSX (tối đa 100 dòng, 2 MB), báo lỗi theo dòng, lọc ca vượt ngưỡng và xuất Excel/PDF. Có CSV mẫu tải từ giao diện. Cột patient_id là tùy chọn để nhập vào hồ sơ cũ; nếu không có, mỗi dòng hợp lệ tạo hồ sơ mới.
+- Admin: quản lý vai trò/khóa/xóa tài khoản, bảo vệ chính admin đang đăng nhập, xem toàn bộ lịch sử, thống kê ca vượt ngưỡng theo tuổi/khu vực, xem chỉ số mô hình, reload model và xóa bản ghi lịch sử.
+- Tên người dùng, khu vực và nội dung sức khỏe trong lịch sử được mã hóa Fernet bằng cryptography đã có trong dự án. Khi khởi động, dữ liệu plaintext cũ được mã hóa trong transaction. Email đăng nhập vẫn lưu dưới dạng chỉ mục có thể tra cứu, chưa mã hóa toàn bộ file SQLite.
+
+### Mô hình chính
+
+File sử dụng: `outputs/models/model_pipeline.pkl` (alias tương thích: `best_model_week5.pkl`). Backend tự nạp file chính. Bản cũ được giữ ở `outputs/models/legacy_before_final.pkl`.
+
+XGBoost được chọn trong nhóm mô hình cây bằng precision trên dự đoán OOF train, ràng buộc Recall train >=97,5%; tìm tham số bằng RandomizedSearchCV 5-fold ROC-AUC. Đã so sánh Logistic Regression, Random Forest, XGBoost và LightGBM; so sánh SMOTE trong fold với điều chỉnh trọng số. Cấu hình thắng dùng trọng số lớp và không dùng SMOTE. Pipeline chứa cả tiền xử lý, classifier và ngưỡng 0,16404158.
+
+Trên tập kiểm tra phát triển 1.022 mẫu / 50 ca dương tính: Recall 90% (45/50), Precision 8,82%, ROC-AUC 0,8504, PR-AUC 0,2748; TN=507, FP=465, FN=5, TP=45. Nhiều cảnh báo giả là đánh đổi của chế độ nhạy cao. Tập này đã được xem qua nhiều vòng phát triển và điều chỉnh chính sách ngưỡng, không được trình bày như kiểm định độc lập chưa từng sử dụng hoặc kết quả lâm sàng. Xem `MODEL_CARD.md` và `outputs/final/validation_metrics.json`.
+
+Huấn luyện lại: `python run.py --retrain`. Tập dữ liệu raw có thể chứa BMI thiếu; imputer/scaler/encoder chỉ fit trong fold train. Không đưa id, tên hoặc email vào mô hình. Bản huấn luyện cuối giữ fit trên 80% train để kết quả holdout có thể đối chiếu; không fit lại toàn bộ dữ liệu sau đánh giá.
+
+### Kiểm thử và dữ liệu
+
+`venv\Scripts\python.exe -m unittest discover -s tests -v`
+
+Bộ kiểm thử dùng database tạm riêng, gồm auth/phân quyền, ngưỡng bác sĩ, hồ sơ, mã hóa vật lý, import CSV/XLSX, export PDF/XLSX, admin và SHAP. `node --check frontend/app.js` kiểm tra cú pháp giao diện.
+
+Giữ và sao lưu `backend/.data_key` cùng database, `backend/.jwt_secret` cho JWT. Không xóa khóa dữ liệu nếu muốn đọc lại dữ liệu đã mã hóa. Có thể cấp khóa qua `DATA_ENCRYPTION_KEY` / `JWT_SECRET_KEY`. TLS/HTTPS thuộc cấu hình triển khai, local hiện sử dụng HTTP; chưa tuyên bố đạt HIPAA. File PDF backend dùng chữ không dấu với font chuẩn; nút In / Lưu PDF trên trình duyệt giữ tiếng Việt.
+
+---
+
+Các ghi chú dưới đây là lịch sử của lần rà soát trước; ưu tiên hướng dẫn phiên bản demo ở trên.
+
+## Cập nhật sau đối chiếu báo cáo final 30/10/2026
+
+Xem `AUDIT_NOTES.md` để biết các lỗi đã sửa và những tuyên bố trong báo cáo chưa được xác minh.
+
+- Chạy ứng dụng: `python run.py` hoặc `run.bat`.
+- Tạo tài khoản quản trị đầu tiên: `venv\Scripts\python.exe backend\create_admin.py` (nhập email và mật khẩu trong terminal). Đăng ký công khai luôn tạo vai trò user. Admin cấp vai trò doctor từ trang quản lý.
+- Bác sĩ và admin được đưa đến `QUAN_LY.HTML` sau đăng nhập. Admin có thể đổi vai trò, khóa/mở khóa, xóa tài khoản, xem cấu hình, nạp lại mô hình, xóa một lịch sử theo mã. Bác sĩ tìm bệnh nhân, xem lịch sử/biểu đồ và xuất Excel hoặc PDF qua backend (PDF không dấu); nút In / Lưu PDF sử dụng trình duyệt để giữ tiếng Việt.
+- Kiểm thử: `venv\Scripts\python.exe -m unittest discover -s tests -v`. Bài kiểm thử tạo database riêng và không sửa tài khoản thật.
+- Huấn luyện mới: `python run.py --retrain`. Kiểm tra chéo 5 fold, tiền xử lý và SMOTE nằm trong mỗi fold; chọn ngưỡng từ dự đoán ngoài fold trên train. Kết quả thực tế lưu ở `outputs/models/validation_metrics.json`, không cam kết tái lập số liệu cũ.
+- Chạy thử huấn luyện mà không thay mô hình phục vụ: `venv\Scripts\python.exe src/train_validated.py --output-dir outputs/validated`.
+- Cấu hình tùy chọn: `DATABASE_URL`, `JWT_SECRET_KEY`. Mặc định sử dụng `backend/app.db`; khóa JWT local sinh ngẫu nhiên lưu ở `backend/.jwt_secret`, cần giữ ổn định và không đưa lên Git.
+- API bổ sung: `/auth/me`, `/health`, `/doctor/export`, `/admin/system`, `/admin/model/reload`, `/admin/history/{id}` cùng các API trong phụ lục báo cáo.
+
+Các phần hướng dẫn cũ bên dưới mang tính lịch sử; khi có khác biệt, ưu tiên hướng dẫn cập nhật này.
+
 <div align="center">
 
 # 🧠 Stroke Risk Screening System

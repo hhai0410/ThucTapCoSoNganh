@@ -1,0 +1,124 @@
+{
+  "selection": "highest training OOF ROC-AUC among tree ensembles",
+  "selected": "XGBoost",
+  "results": [
+    {
+      "model": "Logistic Regression",
+      "threshold": 0.4118397811575689,
+      "cv_auc": 0.8366388383160338,
+      "params": {
+        "classifier__C": 0.1
+      },
+      "recall": 0.84,
+      "precision": 0.12462908011869436,
+      "f1": 0.21705426356589147,
+      "f2": 0.39106145251396646,
+      "roc_auc": 0.8444855967078189,
+      "confusion_matrix": [
+        [
+          677,
+          295
+        ],
+        [
+          8,
+          42
+        ]
+      ]
+    },
+    {
+      "model": "Decision Tree",
+      "threshold": 0.5220883534136547,
+      "cv_auc": 0.8006198387153045,
+      "params": {
+        "classifier__max_depth": 3
+      },
+      "recall": 0.84,
+      "precision": 0.12574850299401197,
+      "f1": 0.21875,
+      "f2": 0.39325842696629215,
+      "roc_auc": 0.7886213991769547,
+      "confusion_matrix": [
+        [
+          680,
+          292
+        ],
+        [
+          8,
+          42
+        ]
+      ]
+    },
+    {
+      "model": "Random Forest",
+      "threshold": 0.4578955544719106,
+      "cv_auc": 0.8135166705215457,
+      "params": {
+        "classifier__max_depth": 5,
+        "classifier__min_samples_leaf": 15
+      },
+      "recall": 0.82,
+      "precision": 0.11849710982658959,
+      "f1": 0.20707070707070707,
+      "f2": 0.37545787545787546,
+      "roc_auc": 0.8150720164609052,
+      "confusion_matrix": [
+        [
+          667,
+          305
+        ],
+        [
+          9,
+          41
+        ]
+      ]
+    },
+    {
+      "model": "XGBoost",
+      "threshold": 0.36317816376686096,
+      "cv_auc": 0.8168387579450349,
+      "params": {
+        "classifier__max_depth": 3,
+        "classifier__reg_lambda": 5.0
+      },
+      "recall": 0.82,
+      "precision": 0.11388888888888889,
+      "f1": 0.2,
+      "f2": 0.36607142857142855,
+      "roc_auc": 0.8318209876543209,
+      "confusion_matrix": [
+        [
+          653,
+          319
+        ],
+        [
+          9,
+          41
+        ]
+      ]
+    },
+    {
+      "model": "LightGBM",
+      "threshold": 0.385385691963102,
+      "cv_auc": 0.8124971734475929,
+      "params": {
+        "classifier__max_depth": 4,
+        "classifier__reg_lambda": 5.0
+      },
+      "recall": 0.84,
+      "precision": 0.11081794195250659,
+      "f1": 0.1958041958041958,
+      "f2": 0.3626943005181347,
+      "roc_auc": 0.8130864197530865,
+      "confusion_matrix": [
+        [
+          635,
+          337
+        ],
+        [
+          8,
+          42
+        ]
+      ]
+    }
+  ]
+}

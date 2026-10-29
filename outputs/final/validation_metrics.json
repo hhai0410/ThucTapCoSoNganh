@@ -1,0 +1,221 @@
+{
+  "selected": "XGBoost",
+  "selection": "training OOF precision with recall >= 0.975, tree ensembles only",
+  "holdout_warning": "Development holdout reused across project iterations; external clinical validation is still required.",
+  "results": [
+    {
+      "model": "Logistic Regression",
+      "cv": {
+        "threshold": 0.017133812123907403,
+        "recall": 0.9798994974874372,
+        "precision": 0.09237328280435812,
+        "f1": 0.16883116883116883,
+        "f2": 0.33539731682146545,
+        "roc_auc": 0.839108114498954,
+        "pr_auc": 0.17094922118801525,
+        "confusion_matrix": [
+          [
+            1973,
+            1916
+          ],
+          [
+            4,
+            195
+          ]
+        ]
+      },
+      "params": {
+        "smote": "passthrough",
+        "classifier__class_weight": "None",
+        "classifier__C": "1"
+      },
+      "holdout": {
+        "threshold": 0.017133812123907403,
+        "recall": 0.86,
+        "precision": 0.08617234468937876,
+        "f1": 0.15664845173041894,
+        "f2": 0.30758226037195996,
+        "roc_auc": 0.84179012345679,
+        "pr_auc": 0.2697852243225596,
+        "confusion_matrix": [
+          [
+            516,
+            456
+          ],
+          [
+            7,
+            43
+          ]
+        ]
+      }
+    },
+    {
+      "model": "Random Forest",
+      "cv": {
+        "threshold": 0.013480517132758078,
+        "recall": 0.9798994974874372,
+        "precision": 0.08871701546860783,
+        "f1": 0.16270337922403003,
+        "f2": 0.3256513026052104,
+        "roc_auc": 0.8411755356882122,
+        "pr_auc": 0.17209032300878147,
+        "confusion_matrix": [
+          [
+            1886,
+            2003
+          ],
+          [
+            4,
+            195
+          ]
+        ]
+      },
+      "params": {
+        "smote": "passthrough",
+        "classifier__min_samples_leaf": "5",
+        "classifier__max_features": "0.6",
+        "classifier__max_depth": "3",
+        "classifier__class_weight": "None"
+      },
+      "holdout": {
+        "threshold": 0.013480517132758078,
+        "recall": 0.88,
+        "precision": 0.0830188679245283,
+        "f1": 0.15172413793103448,
+        "f2": 0.3013698630136986,
+        "roc_auc": 0.842551440329218,
+        "pr_auc": 0.2535441157548264,
+        "confusion_matrix": [
+          [
+            486,
+            486
+          ],
+          [
+            6,
+            44
+          ]
+        ]
+      }
+    },
+    {
+      "model": "XGBoost",
+      "cv": {
+        "threshold": 0.16404157876968384,
+        "recall": 0.9798994974874372,
+        "precision": 0.09330143540669857,
+        "f1": 0.17038007863695936,
+        "f2": 0.33783783783783783,
+        "roc_auc": 0.8442605157440586,
+        "pr_auc": 0.17816101835693254,
+        "confusion_matrix": [
+          [
+            1994,
+            1895
+          ],
+          [
+            4,
+            195
+          ]
+        ]
+      },
+      "params": {
+        "smote": "passthrough",
+        "classifier__subsample": "1.0",
+        "classifier__scale_pos_weight": "15",
+        "classifier__reg_lambda": "20",
+        "classifier__min_child_weight": "15",
+        "classifier__max_depth": "2",
+        "classifier__learning_rate": "0.02"
+      },
+      "holdout": {
+        "threshold": 0.16404157876968384,
+        "recall": 0.9,
+        "precision": 0.08823529411764706,
+        "f1": 0.16071428571428573,
+        "f2": 0.31690140845070425,
+        "roc_auc": 0.8503909465020576,
+        "pr_auc": 0.2748487707941083,
+        "confusion_matrix": [
+          [
+            507,
+            465
+          ],
+          [
+            5,
+            45
+          ]
+        ]
+      }
+    },
+    {
+      "model": "LightGBM",
+      "cv": {
+        "threshold": 0.09241258013473175,
+        "recall": 0.9798994974874372,
+        "precision": 0.08682101513802315,
+        "f1": 0.15950920245398773,
+        "f2": 0.32051282051282054,
+        "roc_auc": 0.8466070387938663,
+        "pr_auc": 0.18525964573898027,
+        "confusion_matrix": [
+          [
+            1838,
+            2051
+          ],
+          [
+            4,
+            195
+          ]
+        ]
+      },
+      "params": {
+        "smote": "passthrough",
+        "classifier__scale_pos_weight": "15",
+        "classifier__reg_lambda": "20",
+        "classifier__num_leaves": "12",
+        "classifier__min_child_samples": "50",
+        "classifier__max_depth": "3",
+        "classifier__learning_rate": "0.02"
+      },
+      "holdout": {
+        "threshold": 0.09241258013473175,
+        "recall": 0.9,
+        "precision": 0.08379888268156424,
+        "f1": 0.15332197614991483,
+        "f2": 0.30529172320217096,
+        "roc_auc": 0.850133744855967,
+        "pr_auc": 0.28894276255253143,
+        "confusion_matrix": [
+          [
+            480,
+            492
+          ],
+          [
+            5,
+            45
+          ]
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "seed": 42,
+    "target_training_recall": 0.975,
+    "features": [
+      "gender",
+      "age",
+      "hypertension",
+      "heart_disease",
+      "ever_married",
+      "work_type",
+      "Residence_type",
+      "avg_glucose_level",
+      "bmi",
+      "smoking_status"
+    ],
+    "rows": 5110,
+    "cv_folds": 5,
+    "data_sha256": "644d473b05d2797006bd94865e4f8bb057f0c721617911613c82c8fcfc707420"
+  },
+  "python": "3.13.15"
+}

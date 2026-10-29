@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from typing import Literal
+import re
 from typing import List, Optional
 
 # ==========================================
@@ -39,10 +41,32 @@ class SmokingStatusEnum(str, Enum):
 # ==========================================
 
 class UserRegister(BaseModel):
-    full_name: str = Field(..., description="Họ và tên") # Thêm dòng này
+    @field_validator("email", mode="before")
+    @classmethod
+    def valid_email(cls, value):
+        value = str(value).strip().lower()
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value):
+            raise ValueError("Email không hợp lệ")
+        return value
+
+    @field_validator("full_name")
+    @classmethod
+    def valid_name(cls, value):
+        if not value.strip():
+            raise ValueError("Họ tên không được trống")
+        return value.strip()
+
+    @field_validator("password")
+    @classmethod
+    def valid_password(cls, value):
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Mật khẩu tối đa 72 byte UTF-8")
+        return value
+
+    full_name: str = Field(..., min_length=1, max_length=200, description="Họ và tên") # Thêm dòng này
     email: str = Field(..., min_length=3, description="Email đăng nhập")
     password: str = Field(..., min_length=6, description="Mật khẩu")
-    role: Optional[str] = "user"
+    role: Literal["user", "doctor"] = "user"
     region: Optional[str] = None
 
 class UserLogin(BaseModel):
@@ -50,6 +74,7 @@ class UserLogin(BaseModel):
     password: str
 
 class Token(BaseModel):
+    role: str = "user"
     access_token: str
     token_type: str = "bearer"
 
@@ -67,6 +92,7 @@ class UserResponse(BaseModel):
 # ==========================================
 
 class PredictRequest(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False, extra="forbid", use_enum_values=True)
     age: float = Field(
         ..., 
         ge=0.0, 
@@ -110,13 +136,13 @@ class PredictRequest(BaseModel):
     )
     avg_glucose_level: float = Field(
         ..., 
-        gt=0.0, 
+        ge=1.0, le=1000.0,
         description="Lượng đường trong máu (mg/dL)", 
         json_schema_extra={"example": 105.67}
     )
     bmi: float = Field(
         ..., 
-        gt=0.0, 
+        ge=10.0, le=100.0,
         description="Chỉ số khối cơ thể (BMI)", 
         json_schema_extra={"example": 24.3}
     )
@@ -132,7 +158,19 @@ class ShapItem(BaseModel):
 
 
 class PredictResponse(BaseModel):
-    prediction_result: int = Field(..., description="Kết quả dự đoán đột quỵ: 0 (Không bị), 1 (Có nguy cơ)")
-    risk_probability: float = Field(..., description="Độ tin cậy của mô hình (ví dụ: 0.95)")
+    prediction_result: int = Field(..., description="Nhãn sàng lọc: 0 (Dưới ngưỡng), 1 (Vượt ngưỡng)")
+    risk_probability: float = Field(..., description="Điểm xác suất đầu ra của mô hình, chưa hiệu chuẩn thành nguy cơ lâm sàng")
     message: str = Field(default="Dự đoán thành công", description="Thông báo phản hồi")
-    shap: Optional[List[ShapItem]] = []
+    threshold: float = 0.18
+    shap: List[ShapItem] = Field(default_factory=list)
+    shap_unit: str = "raw_model_output"
+
+class UserUpdate(BaseModel):
+    role: Literal["user", "doctor", "admin"] | None = None
+    is_active: bool | None = None
+
+
+class PatientCreate(BaseModel):
+    full_name: str = Field(min_length=1, max_length=200)
+    email: str | None = None
+    region: str | None = None

@@ -10,7 +10,7 @@ Script tự làm lần lượt (bước nào đã xong từ lần trước thì 
     1. Tạo môi trường ảo ./venv
     2. Cài thư viện từ requirements.txt (chỉ cài lại khi file này thay đổi)
     3. Chuẩn bị dữ liệu : notebooks/01_eda.py -> notebooks/03_eda.py
-    4. Huấn luyện model : src/week3.py -> src/week5.py -> outputs/models/best_model_week5.pkl
+    4. Huấn luyện model : src/week3.py -> src/week5.py -> outputs/models/model_pipeline.pkl
     5. Bật Backend (FastAPI, cổng 8000) và Frontend (cổng 5500), mở trình duyệt
 
 Chỉ dùng thư viện chuẩn của Python nên chạy được ngay cả khi chưa cài gì.
@@ -32,6 +32,8 @@ import subprocess
 import sys
 import time
 import webbrowser
+import urllib.request
+import urllib.error
 from pathlib import Path
 from urllib.parse import quote
 
@@ -45,7 +47,7 @@ REQUIREMENTS = ROOT / "requirements.txt"
 # Các file "đầu ra": nếu đã tồn tại thì bước tạo ra nó được bỏ qua
 RAW_CSV = ROOT / "data" / "raw" / "healthcare-dataset-stroke-data.csv"
 CLEAN_CSV = ROOT / "data" / "processed" / "stroke_clean.csv"
-MODEL_PKL = ROOT / "outputs" / "models" / "best_model_week5.pkl"   # model cuối do week5 lưu
+MODEL_PKL = ROOT / "outputs" / "models" / "model_pipeline.pkl"   # model cuối do week5 lưu
 
 SCRIPT_DOWNLOAD = ROOT / "notebooks" / "01_eda.py"   # tải dữ liệu gốc
 SCRIPT_EDA = ROOT / "notebooks" / "02_eda.py"        # vẽ biểu đồ (chỉ chạy khi có --eda)
@@ -53,7 +55,7 @@ SCRIPT_CLEAN = ROOT / "notebooks" / "03_eda.py"      # làm sạch dữ liệu
 SCRIPT_WEEK3 = ROOT / "src" / "week3.py"             # chia train/test + SMOTE (tạo data/processed/*.npz)
 # Script huấn luyện + so sánh mô hình, lưu model vào outputs/models/.
 # Ưu tiên src/week5.py; nếu repo đặt tên src/week5_full.py thì dùng tên đó.
-SCRIPT_TRAIN_CANDIDATES = [ROOT / "src" / "week5.py", ROOT / "src" / "week5_full.py"]
+SCRIPT_TRAIN_CANDIDATES = [ROOT / "src" / "train_validated.py", ROOT / "src" / "week5.py", ROOT / "src" / "week5_full.py"]
 
 BACKEND_DIR = ROOT / "backend"
 FRONTEND_DIR = ROOT / "frontend"
@@ -70,6 +72,11 @@ REQUIRED_SERVE = [
     ("sqlalchemy", "sqlalchemy"),
     ("sklearn", "scikit-learn"),
     ("pandas", "pandas"),
+    ("shap", "shap"),
+    ("imblearn", "imbalanced-learn"),
+    ("jose", "python-jose"),
+    ("passlib", "passlib"),
+    ("lightgbm", "lightgbm"),
 ]
 REQUIRED_TRAIN = [
     ("imblearn", "imbalanced-learn"),
@@ -154,7 +161,7 @@ def make_plan(args):
     """Trả về dict mô tả việc cần làm, dùng chung cho chế độ chạy thật và --dry-run."""
     need_raw = args.refresh_data or not RAW_CSV.exists()
     need_clean = need_raw or not CLEAN_CSV.exists()
-    need_model = args.retrain or args.refresh_data or not MODEL_PKL.exists()
+    need_model = args.retrain or need_clean or not MODEL_PKL.exists()
     return {
         "create_venv": not venv_python().exists(),
         "need_raw": need_raw,
@@ -174,7 +181,7 @@ def print_plan(plan, args):
     say("  " + yn(plan["need_raw"], "01_eda.py - tải dữ liệu gốc", "đã có data/raw/..."))
     say("  " + yn(plan["run_eda"], "02_eda.py - vẽ biểu đồ khám phá", "chỉ chạy khi thêm --eda"))
     say("  " + yn(plan["need_clean"], "03_eda.py - làm sạch dữ liệu", "đã có data/processed/stroke_clean.csv"))
-    say("  " + yn(plan["need_model"], f"week3.py + {train_script().name} - huấn luyện model", "đã có outputs/models/best_model_week5.pkl"))
+    say("  " + yn(plan["need_model"], f"week3.py + {train_script().name} - huấn luyện model", "đã có outputs/models/model_pipeline.pkl"))
     if args.setup_only:
         say("  BỎ QUA   : bật máy chủ (do --setup-only)")
     else:
@@ -276,9 +283,9 @@ def train_model(py, plan, total):
         run_script(py, SCRIPT_WEEK3, "chia train/test + SMOTE")
         run_script(py, train_script(), "huấn luyện và so sánh mô hình")
     else:
-        say("Đã có outputs/models/best_model_week5.pkl - bỏ qua huấn luyện (thêm --retrain để huấn luyện lại).")
+        say("Đã có outputs/models/model_pipeline.pkl - bỏ qua huấn luyện (thêm --retrain để huấn luyện lại).")
     if not MODEL_PKL.exists():
-        fail("Chạy xong các bước huấn luyện nhưng không thấy outputs/models/best_model_week5.pkl.\n"
+        fail("Chạy xong các bước huấn luyện nhưng không thấy outputs/models/model_pipeline.pkl.\n"
              f"  Kiểm tra {train_script().name} có lưu model đúng đường dẫn này không.")
 
 
@@ -333,6 +340,13 @@ def start_servers(py, args, total):
         if not wait_for_port(BACKEND_PORT, backend, timeout=90):
             stop_all(procs)
             fail("Backend không khởi động được (xem thông báo lỗi phía trên).")
+
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{BACKEND_PORT}/health", timeout=10) as response:
+                if response.status != 200:
+                    fail("Backend chưa sẵn sàng dự đoán.")
+        except (OSError, urllib.error.URLError):
+            fail("Backend đã mở cổng nhưng mô hình chưa sẵn sàng. Kiểm tra thông báo nạp mô hình.")
 
         frontend = subprocess.Popen(frontend_command(py), cwd=FRONTEND_DIR, env=env)
         procs.append(("Frontend", frontend))
